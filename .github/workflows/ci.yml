@@ -1,0 +1,52 @@
+ name: ParaBank API Tests
+
+ on:
+   push:
+     branches: [main, develop]
+   pull_request:
+     branches: [main]
+   schedule:
+     - cron: "0 7 * * *"
+
+ jobs:
+   api-tests:
+     runs-on: ubuntu-latest
+     timeout-minutes: 15
+
+     steps:
+       - uses: actions/checkout@v4
+
+       - name: Set up Node.js
+         uses: actions/setup-node@v4
+         with:
+           node-version: "20"
+           cache: "npm"
+
+       - name: Install dependencies
+         run: npm ci
+
+       - name: Validate secrets
+         run: |
+           if [ -z "$BASE_URL" ]; then echo "BASE_URL missing"; exit 1; fi
+           if [ -z "$VALID_USER" ]; then echo "VALID_USER missing"; exit 1; fi
+           echo "Secrets OK ✓"
+         env:
+           BASE_URL:   ${{ secrets.BASE_URL }}
+           VALID_USER: ${{ secrets.VALID_USER }}
+
+       - name: Run API tests
+         run: npm run test:ci
+         env:
+           BASE_URL:          ${{ secrets.BASE_URL }}
+           VALID_USER:        ${{ secrets.VALID_USER }}
+           PASSWORD:          ${{ secrets.PASSWORD }}
+           BAD_PASSWORD:      ${{ secrets.BAD_PASSWORD }}
+           RESPONSE_TIME_MS:  "3000"
+
+       - name: Upload report
+         if: always()
+         uses: actions/upload-artifact@v4
+         with:
+           name: api-test-report
+           path: reports/
+           retention-days: 14

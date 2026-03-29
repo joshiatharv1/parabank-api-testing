@@ -1,0 +1,402 @@
+{
+  "info": {
+    "name": "ParaBank API",
+    "_postman_id": "parabank-api-collection",
+    "description": "Full REST API collection for ParaBank banking demo. Mirrors the Jest test suite — auth, customers, accounts, bill pay, and loan endpoints.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl",     "value": "https://parabank.parasoft.com/parabank/services/bank", "type": "string" },
+    { "key": "username",    "value": "john",   "type": "string" },
+    { "key": "password",    "value": "demo",   "type": "string" },
+    { "key": "customerId",  "value": "",       "type": "string" },
+    { "key": "accountId",   "value": "",       "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Valid Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 3000ms', () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test('Has customerId', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('customerId');",
+                  "  pm.expect(json.customerId).to.be.a('number');",
+                  "  pm.collectionVariables.set('customerId', json.customerId);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/login/{{username}}/{{password}}",
+            "header": [{ "key": "Accept", "value": "application/json" }]
+          }
+        },
+        {
+          "name": "Invalid Password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 4xx or 5xx', () => {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([401, 500]);",
+                  "});",
+                  "pm.test('Response time < 3000ms', () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/login/{{username}}/wrongpassword",
+            "header": [{ "key": "Accept", "value": "application/json" }]
+          }
+        },
+        {
+          "name": "Unknown Username",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 4xx or 5xx', () => {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([401, 500]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/login/ghost_user/any_password",
+            "header": [{ "key": "Accept", "value": "application/json" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customers",
+      "item": [
+        {
+          "name": "Get Customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 3000ms', () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test('Schema is valid', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('id').that.is.a('number');",
+                  "  pm.expect(json).to.have.property('firstName').that.is.a('string');",
+                  "  pm.expect(json).to.have.property('lastName').that.is.a('string');",
+                  "  pm.expect(json).to.have.property('address').that.is.an('object');",
+                  "  pm.expect(json).to.have.property('username').that.is.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/customers/{{customerId}}",
+            "header": [{ "key": "Accept", "value": "application/json" }]
+          }
+        },
+        {
+          "name": "Get Customer Accounts",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 3000ms', () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test('Returns array of accounts', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('array').with.length.greaterThan(0);",
+                  "  pm.collectionVariables.set('accountId', json[0].id);",
+                  "});",
+                  "pm.test('Each account has id, customerId, type, balance', () => {",
+                  "  pm.response.json().forEach(acc => {",
+                  "    pm.expect(acc).to.have.all.keys('id','customerId','type','balance');",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/customers/{{customerId}}/accounts",
+            "header": [{ "key": "Accept", "value": "application/json" }]
+          }
+        },
+        {
+          "name": "Non-existent Customer (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 4xx', () => {",
+                  "  pm.expect(pm.response.code).to.be.at.least(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/customers/99999999",
+            "header": [{ "key": "Accept", "value": "application/json" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Accounts",
+      "item": [
+        {
+          "name": "Get Account Details",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 3000ms', () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test('Schema valid — id, customerId, type, balance', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.id).to.be.a('number');",
+                  "  pm.expect(json.customerId).to.be.a('number');",
+                  "  pm.expect(['CHECKING','SAVINGS','LOAN','CREDIT_CARD']).to.include(json.type);",
+                  "  pm.expect(json.balance).to.be.a('number');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/accounts/{{accountId}}",
+            "header": [{ "key": "Accept", "value": "application/json" }]
+          }
+        },
+        {
+          "name": "Get Account Transactions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 3000ms', () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test('Returns array of transactions', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/accounts/{{accountId}}/transactions",
+            "header": [{ "key": "Accept", "value": "application/json" }]
+          }
+        },
+        {
+          "name": "Transfer Funds",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 3000ms', () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/transfer?fromAccountId={{accountId}}&toAccountId={{accountId}}&amount=10",
+              "query": [
+                { "key": "fromAccountId", "value": "{{accountId}}" },
+                { "key": "toAccountId",   "value": "{{accountId}}" },
+                { "key": "amount",        "value": "10" }
+              ]
+            },
+            "header": [{ "key": "Accept", "value": "application/json" }]
+          }
+        },
+        {
+          "name": "Invalid Account (4xx)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 4xx', () => {",
+                  "  pm.expect(pm.response.code).to.be.at.least(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/accounts/00000",
+            "header": [{ "key": "Accept", "value": "application/json" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bill Pay",
+      "item": [
+        {
+          "name": "Valid Bill Payment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 3000ms', () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/billpay?accountId={{accountId}}&amount=25",
+              "query": [
+                { "key": "accountId", "value": "{{accountId}}" },
+                { "key": "amount",    "value": "25" }
+              ]
+            },
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept",       "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Payee\",\n  \"address\": {\n    \"street\": \"123 Main St\",\n    \"city\": \"Boston\",\n    \"state\": \"MA\",\n    \"zipCode\": \"02101\"\n  },\n  \"phoneNumber\": \"617-555-0100\",\n  \"accountNumber\": 54321,\n  \"routingNumber\": \"021000021\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Missing Amount (4xx)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 4xx', () => {",
+                  "  pm.expect(pm.response.code).to.be.at.least(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/billpay?accountId={{accountId}}",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept",       "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Payee\",\n  \"address\": {\n    \"street\": \"123 Main St\",\n    \"city\": \"Boston\",\n    \"state\": \"MA\",\n    \"zipCode\": \"02101\"\n  },\n  \"phoneNumber\": \"617-555-0100\",\n  \"accountNumber\": 54321,\n  \"routingNumber\": \"021000021\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Loan",
+      "item": [
+        {
+          "name": "Request Loan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 3000ms', () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+                  "pm.test('Schema valid — approved, message', () => {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json).to.have.property('approved').that.is.a('boolean');",
+                  "  pm.expect(json).to.have.property('message').that.is.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/requestLoan?customerId={{customerId}}&amount=1000&downPayment=100&fromAccountId={{accountId}}",
+              "query": [
+                { "key": "customerId",     "value": "{{customerId}}" },
+                { "key": "amount",         "value": "1000" },
+                { "key": "downPayment",    "value": "100" },
+                { "key": "fromAccountId",  "value": "{{accountId}}" }
+              ]
+            },
+            "header": [{ "key": "Accept", "value": "application/json" }]
+          }
+        },
+        {
+          "name": "Zero Amount Loan (denied)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Loan denied or 4xx', () => {",
+                  "  if (pm.response.code >= 400) {",
+                  "    pm.expect(pm.response.code).to.be.at.least(400);",
+                  "  } else {",
+                  "    pm.expect(pm.response.json().approved).to.be.false;",
+                  "  }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/requestLoan?customerId={{customerId}}&amount=0&downPayment=0&fromAccountId={{accountId}}",
+              "query": [
+                { "key": "customerId",    "value": "{{customerId}}" },
+                { "key": "amount",        "value": "0" },
+                { "key": "downPayment",   "value": "0" },
+                { "key": "fromAccountId", "value": "{{accountId}}" }
+              ]
+            },
+            "header": [{ "key": "Accept", "value": "application/json" }]
+          }
+        }
+      ]
+    }
+  ]
+}
