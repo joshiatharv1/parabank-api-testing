@@ -1,43 +1,42 @@
 import { apiClient }          from '../src/client/apiClient';
-import { login }              from '../src/helpers/auth';
 import { assertResponseTime } from '../src/helpers/responseTime';
+import { config }             from '../src/config/env';
 
-let customerId: number;
-let accountId:  number;
+const CUSTOMER_ID = config.knownCustomerId;
+let accountId: number;
 
 beforeAll(async () => {
-  const result = await login();
-  customerId   = result.customerId;
-  const accounts = await apiClient.get<{ id: number }[]>(`/customers/${customerId}/accounts`);
-  accountId = accounts.data[0].id;
+  const res = await apiClient.get<{ id: number }[]>(`/customers/${CUSTOMER_ID}/accounts`);
+  accountId = res.data[0].id;
 });
+
+// Payee body sent as JSON in request body
+const payee = {
+  name:          'Test Payee',
+  address:       { street: '123 Main St', city: 'Boston', state: 'MA', zipCode: '02101' },
+  phoneNumber:   '617-555-0100',
+  accountNumber: 54321,
+  routingNumber: '021000021',
+};
 
 describe('Bill Pay', () => {
 
-  const payee = {
-    name:        'Test Payee',
-    address:     { street: '123 Main St', city: 'Boston', state: 'MA', zipCode: '02101' },
-    phoneNumber: '617-555-0100',
-    accountNumber: 54321,
-    routingNumber: '021000021',
-  };
-
   test('POST /billpay — valid payment returns 200', async () => {
-    const res = await apiClient.post('/billpay', payee, {
-      accountId,
-      amount: 25,
-    });
+    const res = await apiClient.post(
+      `/bill-pay`,          // ParaBank endpoint
+      payee,
+      { accountId, amount: 10 },
+    );
 
     expect(res.status).toBe(200);
     assertResponseTime(res);
   });
 
-  test('POST /billpay — missing amount returns 4xx', async () => {
-    const res = await apiClient.post('/billpay', payee, { accountId });
+  test('POST /billpay — missing payee body returns 4xx or 5xx', async () => {
+    const res = await apiClient.post('/bill-pay', null, { accountId, amount: 10 });
 
     expect(res.status).toBeGreaterThanOrEqual(400);
     assertResponseTime(res);
   });
 
 });
-
