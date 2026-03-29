@@ -1,13 +1,10 @@
 import { z } from 'zod';
 
-// Actual ParaBank response: { loanProviderName, approved, message, accountId?, loanAmount?, downPayment? }
+// Use passthrough() so unknown fields from ParaBank don't fail validation
+// Only assert the fields we know are always present
 export const LoanResponseSchema = z.object({
-  loanProviderName: z.string().optional(),
-  approved:         z.boolean(),
-  message:          z.string(),
-  accountId:        z.number().optional(),
-  loanAmount:       z.number().optional(),
-  downPayment:      z.number().optional(),
-});
+  approved: z.boolean(),
+  message:  z.string(),
+}).passthrough();
 
 export type LoanResponse = z.infer<typeof LoanResponseSchema>;

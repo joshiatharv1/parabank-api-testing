@@ -10,22 +10,22 @@ beforeAll(async () => {
   accountId = res.data[0].id;
 });
 
-const payee = {
-  name:          'Test Payee',
-  address:       { street: '123 Main St', city: 'Boston', state: 'MA', zipCode: '02101' },
-  phoneNumber:   '617-555-0100',
-  accountNumber: 54321,
-  routingNumber: '021000021',
-};
-
+// ParaBank billpay: payee fields sent as query params, not JSON body
 describe('Bill Pay', () => {
 
   test('POST /billpay — valid payment returns 200', async () => {
-    const res = await apiClient.post(
-      '/billpay',
-      payee,
-      { accountId, amount: 10 },
-    );
+    const res = await apiClient.post('/billpay', null, {
+      accountId,
+      amount:              10,
+      'payee.name':        'Test Payee',
+      'payee.address.street':  '123 Main St',
+      'payee.address.city':    'Boston',
+      'payee.address.state':   'MA',
+      'payee.address.zipCode': '02101',
+      'payee.phoneNumber':     '617-555-0100',
+      'payee.accountNumber':   54321,
+      'payee.routingNumber':   '021000021',
+    });
 
     expect(res.status).toBe(200);
     assertResponseTime(res);
