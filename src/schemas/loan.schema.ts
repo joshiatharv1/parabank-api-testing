@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-// ParaBank returns: { "loanProviderName": "...", "approved": true, "message": "..." }
+// Actual ParaBank response: { loanProviderName, approved, message, accountId?, loanAmount?, downPayment? }
 export const LoanResponseSchema = z.object({
   loanProviderName: z.string().optional(),
   approved:         z.boolean(),

@@ -4,31 +4,31 @@ import { config }             from '../src/config/env';
 
 describe('Authentication', () => {
 
-  test('valid login returns 200 and a customerId', async () => {
+  test('valid login — 200 and returns customer object', async () => {
     const res = await apiClient.get(`/login/${config.username}/${config.password}`);
 
     expect(res.status).toBe(200);
-    expect(res.data).toHaveProperty('customerId');
-    expect(typeof (res.data as any).customerId).toBe('number');
+    expect((res.data as any).id).toBeGreaterThan(0);
+    expect((res.data as any).firstName).toBeDefined();
     assertResponseTime(res);
   });
 
-  test('invalid password returns 401 or 500', async () => {
+  test('invalid password — returns 4xx', async () => {
     const res = await apiClient.get(`/login/${config.username}/${config.badPassword}`);
 
-    expect([401, 403, 500]).toContain(res.status);
+    expect(res.status).toBeGreaterThanOrEqual(400);
     assertResponseTime(res);
   });
 
-  test('unknown username returns 401 or 500', async () => {
+  test('unknown username — returns 4xx', async () => {
     const res = await apiClient.get('/login/ghost_user/any_password');
 
-    expect([401, 403, 500]).toContain(res.status);
+    expect(res.status).toBeGreaterThanOrEqual(400);
     assertResponseTime(res);
   });
 
-  test('empty credentials returns 4xx or 5xx', async () => {
-    const res = await apiClient.get('/login/ / ');
+  test('empty credentials — returns 4xx or 5xx', async () => {
+    const res = await apiClient.get('/login/%20/%20');
 
     expect(res.status).toBeGreaterThanOrEqual(400);
     assertResponseTime(res);

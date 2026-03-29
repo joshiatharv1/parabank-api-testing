@@ -10,7 +10,6 @@ beforeAll(async () => {
   accountId = res.data[0].id;
 });
 
-// Payee body sent as JSON in request body
 const payee = {
   name:          'Test Payee',
   address:       { street: '123 Main St', city: 'Boston', state: 'MA', zipCode: '02101' },
@@ -23,7 +22,7 @@ describe('Bill Pay', () => {
 
   test('POST /billpay — valid payment returns 200', async () => {
     const res = await apiClient.post(
-      `/bill-pay`,          // ParaBank endpoint
+      '/billpay',
       payee,
       { accountId, amount: 10 },
     );
@@ -33,7 +32,7 @@ describe('Bill Pay', () => {
   });
 
   test('POST /billpay — missing payee body returns 4xx or 5xx', async () => {
-    const res = await apiClient.post('/bill-pay', null, { accountId, amount: 10 });
+    const res = await apiClient.post('/billpay', null, { accountId, amount: 10 });
 
     expect(res.status).toBeGreaterThanOrEqual(400);
     assertResponseTime(res);
