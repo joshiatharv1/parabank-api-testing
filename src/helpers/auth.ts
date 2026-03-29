@@ -1,24 +1,25 @@
 import { apiClient } from '../client/apiClient';
 import { config }    from '../config/env';
 
-export interface LoginResult {
-  customerId: number;
-  username:   string;
+// Login returns the full Customer object — id field IS the customerId
+export interface CustomerResponse {
+  id:          number;
+  firstName:   string;
+  lastName:    string;
+  username:    string;
 }
 
 /**
- * Logs in and returns customerId + username.
- * ParaBank auth: GET /login/{username}/{password}
+ * GET /login/{username}/{password}
+ * Returns the customer object; customer.id is the customerId.
  */
 export async function login(
   username = config.username,
-  password = config.password
+  password = config.password,
 ): Promise<{ customerId: number; statusCode: number }> {
-  const res = await apiClient.get<LoginResult>(
-    `/login/${username}/${password}`
-  );
+  const res = await apiClient.get<CustomerResponse>(`/login/${username}/${password}`);
   return {
-    customerId: res.data?.customerId ?? -1,
+    customerId: res.data?.id ?? -1,
     statusCode: res.status,
   };
 }
