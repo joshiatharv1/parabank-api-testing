@@ -8,13 +8,13 @@ export interface LoginResult {
 
 /**
  * Logs in and returns customerId + username.
- * ParaBank auth: POST /login/{username}/{password}
+ * ParaBank auth: GET /login/{username}/{password}
  */
 export async function login(
   username = config.username,
   password = config.password
 ): Promise<{ customerId: number; statusCode: number }> {
-  const res = await apiClient.post<LoginResult>(
+  const res = await apiClient.get<LoginResult>(
     `/login/${username}/${password}`
   );
   return {

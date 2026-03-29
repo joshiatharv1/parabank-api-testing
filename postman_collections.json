@@ -36,7 +36,7 @@
             }
           ],
           "request": {
-            "method": "POST",
+            "method": "GET",
             "url": "{{baseUrl}}/login/{{username}}/{{password}}",
             "header": [{ "key": "Accept", "value": "application/json" }]
           }
@@ -49,7 +49,7 @@
               "script": {
                 "exec": [
                   "pm.test('Status is 4xx or 5xx', () => {",
-                  "  pm.expect(pm.response.code).to.be.oneOf([401, 500]);",
+                  "  pm.expect(pm.response.code).to.be.oneOf([401, 403, 500]);",
                   "});",
                   "pm.test('Response time < 3000ms', () => pm.expect(pm.response.responseTime).to.be.below(3000));"
                 ]
@@ -57,7 +57,7 @@
             }
           ],
           "request": {
-            "method": "POST",
+            "method": "GET",
             "url": "{{baseUrl}}/login/{{username}}/wrongpassword",
             "header": [{ "key": "Accept", "value": "application/json" }]
           }

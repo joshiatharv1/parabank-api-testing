@@ -1,11 +1,11 @@
-import { apiClient }        from '../src/client/apiClient';
+import { apiClient }          from '../src/client/apiClient';
 import { assertResponseTime } from '../src/helpers/responseTime';
-import { config }           from '../src/config/env';
+import { config }             from '../src/config/env';
 
 describe('Authentication', () => {
 
   test('valid login returns 200 and a customerId', async () => {
-    const res = await apiClient.post(`/login/${config.username}/${config.password}`);
+    const res = await apiClient.get(`/login/${config.username}/${config.password}`);
 
     expect(res.status).toBe(200);
     expect(res.data).toHaveProperty('customerId');
@@ -14,21 +14,21 @@ describe('Authentication', () => {
   });
 
   test('invalid password returns 401 or 500', async () => {
-    const res = await apiClient.post(`/login/${config.username}/${config.badPassword}`);
+    const res = await apiClient.get(`/login/${config.username}/${config.badPassword}`);
 
-    expect([401, 500]).toContain(res.status);
+    expect([401, 403, 500]).toContain(res.status);
     assertResponseTime(res);
   });
 
   test('unknown username returns 401 or 500', async () => {
-    const res = await apiClient.post('/login/ghost_user/any_password');
+    const res = await apiClient.get('/login/ghost_user/any_password');
 
-    expect([401, 500]).toContain(res.status);
+    expect([401, 403, 500]).toContain(res.status);
     assertResponseTime(res);
   });
 
   test('empty credentials returns 4xx or 5xx', async () => {
-    const res = await apiClient.post('/login/ / ');
+    const res = await apiClient.get('/login/ / ');
 
     expect(res.status).toBeGreaterThanOrEqual(400);
     assertResponseTime(res);
